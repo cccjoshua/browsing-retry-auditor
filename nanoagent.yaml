@@ -1,0 +1,40 @@
+_ > nanoagent.plugin.v0001.ManifestConfig:
+id: browsing-retry-auditor
+name: Browsing Log Retry Auditor
+version: 0.1.0
+status: ready
+spec: nanoagent.plugin/v0001
+
+runtime > nanoagent.plugin.v0001.RuntimeConfig:
+  type: mcp_stdio
+  command: [uv, run, --frozen, python, -m, plugin]
+
+permissions > nanoagent.plugin.v0001.PermissionsConfig:
+  network > nanoagent.plugin.v0001.NetworkConfig:
+    hosts: []
+  filesystem > nanoagent.plugin.v0001.FilesystemConfig:
+    write: [workspace]
+
+# One entry per contract.Tool; its input and output classes are contract.TOOLS's.
+tools > dict[contract.Tool, nanoagent.plugin.v0001.ToolConfig]:
+  log_info:
+    description: Say how many events a seed's browsing log holds and how many one read returns
+  read_log:
+    description: Read up to 50 events of the browsing log from an offset, each with its raw URL, action and outcome
+  canonical_states:
+    description: Turn up to 50 raw URLs into canonical page states, dropping session, time, ad and tracking parameters
+  scan_log:
+    description: The whole log and its retries; the reference, never shown to the agent
+
+# One entry per contract.Task; its input and output classes are contract.TASKS's.
+tasks > dict[contract.Task, nanoagent.plugin.v0001.TaskConfig]:
+  audit-retries:
+    description: Find every action a web agent retried after it had already failed
+    runner: agent
+    tools: [log_info, read_log, canonical_states]
+    reference: scan_log
+    instructions: |-
+      Call log_info with the seed, then read the whole log with read_log, 50 events at a time from offset 0, 50, 100, ... until every event is read (at most 3 reads).
+      Give each page's URLs to canonical_states and use the state it returns: two URLs with the same canonical state are the same page state.
+      Go through the events in step order. An attempt of a (state, action) pair is a retry when an earlier attempt of the same pair failed; a pair that only failed once and was never attempted again, or was only repeated after successes, has no retry.
+      Submit retries: one entry per retried pair, with its state exactly as canonical_states gave it, its action exactly as logged, and retry_count, the number of its attempts that came after its first failure. Each pair once; submit an empty list when nothing was retried.

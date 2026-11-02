@@ -1,0 +1,12 @@
+_ > nanoagent.plugin.v0001.ProductConfig:
+tagline: "Find where a web agent kept retrying actions that had already failed"
+summary: "A browsing log, built from a seed, records what a web agent did: raw URLs full of session, time and ad parameters, the action it took and whether it failed. The agent reads the log page by page, canonicalizes the URLs, and reports every action it retried after a failure, with how many times. The verifier counts the retries on the full log and checks every pair and count."
+highlights:
+  - "Every log is rebuilt exactly from its seed, so any run can be reproduced"
+  - "The verifier canonicalizes and counts the log itself: no model judges the report"
+  - "Shows which retried actions were missed, invented or miscounted"
+steps:
+  - "Give a seed"
+  - "The agent reads the log 50 events at a time and canonicalizes the URLs"
+  - "It reports each retried state and action with its count"
+  - "The verifier counts the retries on the whole log and shows the verdict"
