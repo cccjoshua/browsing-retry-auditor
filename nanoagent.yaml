@@ -1,7 +1,7 @@
 _ > nanoagent.plugin.v0001.ManifestConfig:
 id: browsing-retry-auditor
 name: Browsing Log Retry Auditor
-version: 0.1.1
+version: 0.1.2
 status: ready
 spec: nanoagent.plugin/v0001
 
@@ -20,7 +20,7 @@ tools > dict[contract.Tool, nanoagent.plugin.v0001.ToolConfig]:
   log_info:
     description: Say how many events a seed's browsing log holds and how many one read returns
   read_log:
-    description: Read up to 250 events of the browsing log from an offset, each with its raw URL, action and outcome
+    description: Read up to 250 events of the browsing log from an offset, each with its raw URL, canonical page state, action and outcome
   canonical_states:
     description: Turn up to 250 raw URLs into canonical page states, dropping session, time, ad and tracking parameters
   scan_log:
@@ -34,9 +34,7 @@ tasks > dict[contract.Task, nanoagent.plugin.v0001.TaskConfig]:
     tools: [log_info, read_log, canonical_states]
     reference: scan_log
     instructions: |-
-      Work in three steps: read the log, canonicalize its URLs, submit.
-      Step 1: call read_log once with the seed, offset 0 and limit 250. One call returns the whole log (a log has fewer than 250 events), each event with its step, raw URL, action and outcome.
-      Step 2: call canonical_states once with every raw URL of the log (at most 250 URLs, all in one call) and use the state it returns: two URLs with the same canonical state are the same page state.
+      Work in two steps: read the log, submit.
+      Step 1: call read_log once with the seed, offset 0 and limit 250. One call returns the whole log (a log has fewer than 250 events), each event with its step, raw URL, canonical state, action and outcome. Use each event's state: two events with the same state are the same page state. You do not need canonical_states or log_info.
       Then go through the events in step order. An attempt of a (state, action) pair is a retry when an earlier attempt of the same pair failed; a pair that only failed once and was never attempted again, or was only repeated after successes, has no retry.
-      Step 3: submit retries: one entry per retried pair, with its state exactly as canonical_states gave it, its action exactly as logged, and retry_count, the number of its attempts that came after its first failure. Each pair once; submit an empty list when nothing was retried.
-      Do not call log_info; it is not needed.
+      Step 2: submit retries: one entry per retried pair, with its state exactly as read_log gave it, its action exactly as logged, and retry_count, the number of its attempts that came after its first failure. Each pair once; submit an empty list when nothing was retried.

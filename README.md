@@ -15,7 +15,7 @@ then, and after a failure the agent often tries again. No network is used.
 | Tool | Does | Code |
 |---|---|---|
 | `log_info` | Says how many events the log holds and the page size | `src/plugin/tools.py` |
-| `read_log` | Reads up to 250 events from an offset | `src/plugin/tools.py` |
+| `read_log` | Reads up to 250 events from an offset, each with its canonical state | `src/plugin/tools.py` |
 | `canonical_states` | Canonicalizes up to 250 raw URLs | `src/plugin/tools.py` |
 | `scan_log` | The whole log and its retries: the task's reference, never shown to the agent | `src/plugin/tools.py` |
 

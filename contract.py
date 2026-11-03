@@ -51,6 +51,7 @@ class ReadInput(Output):
 class LogEvent(Output):
     step: Annotated[int, "The event's step number, from 1"]
     url: Annotated[str, "The page's raw URL, with session, time and ad parameters"]
+    state: Annotated[str, "The page's canonical state: what canonical_states gives for url, so two events of one page state show the same state"]
     action: Annotated[str, ACTION]
     outcome: Annotated[Outcome, "ok or fail"]
 

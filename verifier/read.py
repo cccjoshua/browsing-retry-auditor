@@ -1,6 +1,6 @@
 """read_log: one page of events."""
 
-from .checks import PAGE_SIZE, result, seed_problem
+from .checks import PAGE_SIZE, canonical_state, result, seed_problem
 
 
 def verify_input(value):
@@ -23,4 +23,6 @@ def verify_output(input_value, output_value, workspace):
         return result(False, "the events are not the steps from offset + 1, in order")
     if any("://" not in event.url or not event.action.strip() for event in events):
         return result(False, "every event has a URL and an action")
+    if any(event.state != canonical_state(event.url) for event in events):
+        return result(False, "every event's state is its URL's canonical state")
     return result(True, f"steps {steps[0]} to {steps[-1]}")

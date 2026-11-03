@@ -20,7 +20,9 @@ from plugin.log import PAGE_SIZE, build_log, canonical_state, retries
 
 
 def _event(event) -> LogEvent:
-    return LogEvent(step=event.step, url=event.url, action=event.action, outcome=event.outcome)
+    return LogEvent(
+        step=event.step, url=event.url, state=canonical_state(event.url), action=event.action, outcome=event.outcome
+    )
 
 
 def log_info(given: SeedInput, workspace: Path) -> LogInfoOutput:

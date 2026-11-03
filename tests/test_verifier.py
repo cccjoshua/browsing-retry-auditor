@@ -10,6 +10,7 @@ from test_log import audit_by_tools
 import verifier
 from contract import TASKS, TOOLS, FullLogOutput, ReadInput, SeedInput, Task, Tool, UrlsInput
 from plugin import canonical_states, log_info, read_log, scan_log
+from plugin.log import canonical_state
 
 TASK = "audit-retries"
 SEEDS = range(60)
@@ -171,13 +172,11 @@ def test_the_last_partial_page_counts(tmp_path: Path) -> None:
 def test_a_success_between_failures_keeps_the_later_attempts_retries(tmp_path: Path) -> None:
     found = plain_output(reference(7))
     url = "https://shop.example.com/cart?sid=1"
-    found["events"] = [
-        {"step": 1, "url": url, "action": "click:checkout", "outcome": "fail"},
-        {"step": 2, "url": url.replace("sid=1", "sid=2"), "action": "click:checkout", "outcome": "ok"},
-        {"step": 3, "url": url.upper().replace("HTTPS", "https"), "action": "click:checkout", "outcome": "ok"},
-        {"step": 4, "url": url, "action": "click:remove-item", "outcome": "ok"},
-        {"step": 5, "url": url, "action": "click:remove-item", "outcome": "ok"},
-    ]
+    raw = [(url, "click:checkout", "fail"), (url.replace("sid=1", "sid=2"), "click:checkout", "ok"),
+           (url.upper().replace("HTTPS", "https"), "click:checkout", "ok"),
+           (url, "click:remove-item", "ok"), (url, "click:remove-item", "ok")]
+    found["events"] = [{"step": step, "url": u, "state": canonical_state(u), "action": action, "outcome": outcome}
+                       for step, (u, action, outcome) in enumerate(raw, start=1)]
     found["retries"] = [{"state": "shop.example.com/cart", "action": "click:checkout", "retry_count": 2}]
     pinned = build_output(found, FullLogOutput)
     assert verify_output("scan_log", {"seed": 7}, found)["valid"] is True
@@ -212,3 +211,12 @@ def test_the_verdict_is_the_same_every_time(tmp_path: Path) -> None:
     found = {"retries": audit_by_tools(11)["retries"][1:]}
     verdicts = [verify_task(11, found, reference(11), tmp_path) for _ in range(3)]
     assert verdicts[0] == verdicts[1] == verdicts[2]
+
+
+def test_read_log_events_carry_their_canonical_state_and_a_wrong_one_is_refused() -> None:
+    given = {"seed": 7, "offset": 0, "limit": 250}
+    page = plain_output(read_log(ReadInput(**given), None))
+    assert all(event["state"] == canonical_state(event["url"]) for event in page["events"])
+    assert verify_output("read_log", given, page)["valid"] is True
+    page["events"][3]["state"] = "shop.example.com/wrong"
+    assert verify_output("read_log", given, page)["valid"] is False
