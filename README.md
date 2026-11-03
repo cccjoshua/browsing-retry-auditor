@@ -1,9 +1,9 @@
 # Browsing Log Retry Auditor
 
-A `nanoagent.plugin/v0001` plugin. An agent reads a web agent's browsing log page by page,
-canonicalizes its URLs into page states, and reports every (state, action) pair that was attempted
-again after an earlier attempt of it failed, with the number of such retries. A deterministic verifier
-counts the retries on the full log and checks the report.
+A `nanoagent.plugin/v0001` plugin. An agent audits a web agent's browsing log: `pair_attempts` canonicalizes
+its URLs into page states and lists each (state, action) pair with its outcomes in step order, and the agent
+reports every pair that was attempted again after an earlier attempt of it failed, with the number of such
+retries. A deterministic verifier canonicalizes the raw log itself, counts the retries and checks the report.
 
 Each log is built from an integer seed alone (SHA-256 of the seed and a counter): 90 to 140 events over
 8 to 11 page states. URLs of one state differ in host case, a trailing slash, parameter order and
