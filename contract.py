@@ -44,7 +44,7 @@ class LogInfoOutput(Output):
 class ReadInput(Output):
     seed: Annotated[int, SEED]
     offset: Annotated[int, "The index of the first event to read, from 0"]
-    limit: Annotated[int, "How many events to read, 1 to 50"]
+    limit: Annotated[int, "How many events to read, 1 to 250"]
 
 
 @dataclass
@@ -63,7 +63,7 @@ class LogPageOutput(Output):
 
 @dataclass
 class UrlsInput(Output):
-    urls: Annotated[list[str], "Raw URLs from the log, 1 to 50"]
+    urls: Annotated[list[str], "Raw URLs from the log, 1 to 250"]
 
 
 @dataclass

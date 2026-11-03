@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from contract import Outcome
 
 MAX_SEED = 1_000_000
-PAGE_SIZE = 50
+PAGE_SIZE = 250
 HOST = "shop.example.com"
 NOISE = frozenset({"sid", "session", "ts", "t", "ad", "ad_id", "utm_source", "utm_campaign", "ref"})
 STATES = (

@@ -6,7 +6,7 @@ The verifier canonicalizes URLs and counts retries itself, with the rules the ta
 from contract import Outcome
 
 MAX_SEED = 1_000_000
-PAGE_SIZE = 50
+PAGE_SIZE = 250
 NOISE = frozenset({"sid", "session", "ts", "t", "ad", "ad_id", "utm_source", "utm_campaign", "ref"})
 
 

@@ -64,7 +64,9 @@ def test_the_tools_refuse_reads_outside_the_log() -> None:
     with pytest.raises(ValueError, match="offset"):
         read_log(ReadInput(seed=7, offset=total, limit=5), None)
     with pytest.raises(ValueError, match="limit"):
-        read_log(ReadInput(seed=7, offset=0, limit=51), None)
+        read_log(ReadInput(seed=7, offset=0, limit=251), None)
+    with pytest.raises(ValueError, match="URLs"):
+        canonical_states(UrlsInput(urls=["https://shop.example.com/cart"] * 251), None)
     with pytest.raises(ValueError, match="URL"):
         canonical_states(UrlsInput(urls=["shop.example.com/cart"]), None)
     with pytest.raises(ValueError, match="seed"):

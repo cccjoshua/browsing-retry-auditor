@@ -134,8 +134,8 @@ def test_the_contract_refuses_a_malformed_report(output: dict) -> None:
 
 
 def test_refuses_malformed_tool_input() -> None:
-    assert verify_input("read_log", {"seed": 7, "offset": 0, "limit": 50})["valid"] is True
-    assert verify_input("read_log", {"seed": 7, "offset": 0, "limit": 51})["valid"] is False
+    assert verify_input("read_log", {"seed": 7, "offset": 0, "limit": 250})["valid"] is True
+    assert verify_input("read_log", {"seed": 7, "offset": 0, "limit": 251})["valid"] is False
     assert verify_input("read_log", {"seed": 7, "offset": -1, "limit": 20})["valid"] is False
     assert verify_input("read_log", {"seed": 7, "offset": 0, "limit": 0})["valid"] is False
     assert verify_input("canonical_states", {"urls": []})["valid"] is False
@@ -149,6 +149,16 @@ def test_refuses_malformed_tool_input() -> None:
 def test_a_log_with_no_retries_takes_an_empty_report(tmp_path: Path) -> None:
     seed = next(seed for seed in range(2000) if not reference(seed).retries)
     assert verify_task(seed, {"retries": []}, reference(seed), tmp_path)["valid"] is True
+
+
+def test_the_whole_log_reads_in_one_call_and_its_urls_canonicalize_in_one_call(tmp_path: Path) -> None:
+    for seed in (0, 3, 7, 1_000_000, *range(200)):
+        total = log_info(SeedInput(seed=seed), None).events
+        assert total < 250
+        whole = read_log(ReadInput(seed=seed, offset=0, limit=250), None)
+        assert len(whole.events) == total and whole.events[-1].step == total
+        states = canonical_states(UrlsInput(urls=[event.url for event in whole.events]), None)
+        assert len(states.states) == total
 
 
 def test_the_last_partial_page_counts(tmp_path: Path) -> None:
