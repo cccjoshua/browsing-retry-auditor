@@ -10,6 +10,8 @@ from contract import (
     LogEvent,
     LogInfoOutput,
     LogPageOutput,
+    PairAttempts,
+    PairsOutput,
     ReadInput,
     Retry,
     SeedInput,
@@ -52,4 +54,14 @@ def scan_log(given: SeedInput, workspace: Path) -> FullLogOutput:
     return FullLogOutput(
         events=[_event(event) for event in events],
         retries=[Retry(state=state, action=action, retry_count=count) for state, action, count in retries(events)],
+    )
+
+
+def pair_attempts(given: SeedInput, workspace: Path) -> PairsOutput:
+    """The log grouped by (canonical state, action): each pair's outcomes in step order."""
+    grouped: dict[tuple[str, str], list] = {}
+    for event in build_log(given.seed):
+        grouped.setdefault((canonical_state(event.url), event.action), []).append(event.outcome)
+    return PairsOutput(
+        pairs=[PairAttempts(state=state, action=action, outcomes=found) for (state, action), found in grouped.items()]
     )

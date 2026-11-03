@@ -13,7 +13,7 @@ from mcp.server.stdio import stdio_server
 from slimconfig import build_output, output_schema, plain_output
 
 from contract import TOOLS, Tool
-from plugin import canonical_states, log_info, read_log, scan_log
+from plugin import canonical_states, log_info, pair_attempts, read_log, scan_log
 
 server = Server("browsing-retry-auditor")
 # NanoAgent names the one folder this plugin may write to.
@@ -23,6 +23,7 @@ IMPLEMENTATIONS = {
     Tool.LOG_INFO: log_info,
     Tool.READ_LOG: read_log,
     Tool.CANONICAL_STATES: canonical_states,
+    Tool.PAIR_ATTEMPTS: pair_attempts,
     Tool.SCAN_LOG: scan_log,
 }
 

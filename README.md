@@ -17,6 +17,7 @@ then, and after a failure the agent often tries again. No network is used.
 | `log_info` | Says how many events the log holds and the page size | `src/plugin/tools.py` |
 | `read_log` | Reads up to 250 events from an offset, each with its canonical state | `src/plugin/tools.py` |
 | `canonical_states` | Canonicalizes up to 250 raw URLs | `src/plugin/tools.py` |
+| `pair_attempts` | Groups the whole log by (canonical state, action), each pair's outcomes in step order | `src/plugin/tools.py` |
 | `scan_log` | The whole log and its retries: the task's reference, never shown to the agent | `src/plugin/tools.py` |
 
 The log itself is built in `src/plugin/log.py`.
@@ -25,7 +26,7 @@ The log itself is built in `src/plugin/log.py`.
 
 | Task | Does | Runner |
 |---|---|---|
-| `audit-retries` | Report every (state, action) retried after a failure, with its count | `agent`, with `log_info`, `read_log` and `canonical_states`; reference `scan_log` |
+| `audit-retries` | Report every (state, action) retried after a failure, with its count | `agent`, with `pair_attempts`; reference `scan_log` |
 
 A state is the host and path in lower case without a trailing slash, then the query parameters that
 are not noise, sorted. An attempt is a retry when an earlier attempt of the same pair failed. The

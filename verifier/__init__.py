@@ -2,12 +2,13 @@
 
 from contract import Task, Tool
 
-from . import audit, info, read, scan, states
+from . import audit, info, pairs, read, scan, states
 
 TOOLS = {
     Tool.LOG_INFO: info,
     Tool.READ_LOG: read,
     Tool.CANONICAL_STATES: states,
+    Tool.PAIR_ATTEMPTS: pairs,
     Tool.SCAN_LOG: scan,
 }
 # task -> its output's check, verify_task(arguments, output, reference, workspace)

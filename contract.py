@@ -11,6 +11,7 @@ class Tool(Enum):
     LOG_INFO = "log_info"
     READ_LOG = "read_log"
     CANONICAL_STATES = "canonical_states"
+    PAIR_ATTEMPTS = "pair_attempts"
     SCAN_LOG = "scan_log"
 
 
@@ -79,6 +80,20 @@ class StatesOutput(Output):
 
 
 @dataclass
+class PairAttempts(Output):
+    state: Annotated[str, STATE]
+    action: Annotated[str, ACTION]
+    outcomes: Annotated[list[Outcome], "Every attempt of this pair, in step order: ok or fail"]
+
+
+@dataclass
+class PairsOutput(Output):
+    pairs: Annotated[
+        list[PairAttempts], "Every (state, action) pair of the log, in the order it first appears, with its attempts"
+    ]
+
+
+@dataclass
 class Retry(Output):
     state: Annotated[str, STATE]
     action: Annotated[str, ACTION]
@@ -103,6 +118,7 @@ TOOLS = {
     Tool.LOG_INFO: (SeedInput, LogInfoOutput),
     Tool.READ_LOG: (ReadInput, LogPageOutput),
     Tool.CANONICAL_STATES: (UrlsInput, StatesOutput),
+    Tool.PAIR_ATTEMPTS: (SeedInput, PairsOutput),
     Tool.SCAN_LOG: (SeedInput, FullLogOutput),
 }
 TASKS = {

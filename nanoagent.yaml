@@ -1,7 +1,7 @@
 _ > nanoagent.plugin.v0001.ManifestConfig:
 id: browsing-retry-auditor
 name: Browsing Log Retry Auditor
-version: 0.1.2
+version: 0.1.3
 status: ready
 spec: nanoagent.plugin/v0001
 
@@ -23,6 +23,8 @@ tools > dict[contract.Tool, nanoagent.plugin.v0001.ToolConfig]:
     description: Read up to 250 events of the browsing log from an offset, each with its raw URL, canonical page state, action and outcome
   canonical_states:
     description: Turn up to 250 raw URLs into canonical page states, dropping session, time, ad and tracking parameters
+  pair_attempts:
+    description: Group the whole log by (canonical page state, action), listing each pair's outcomes in step order
   scan_log:
     description: The whole log and its retries; the reference, never shown to the agent
 
@@ -31,10 +33,11 @@ tasks > dict[contract.Task, nanoagent.plugin.v0001.TaskConfig]:
   audit-retries:
     description: Find every action a web agent retried after it had already failed
     runner: agent
-    tools: [log_info, read_log, canonical_states]
+    tools: [pair_attempts]
     reference: scan_log
     instructions: |-
-      Work in two steps: read the log, submit.
-      Step 1: call read_log once with the seed, offset 0 and limit 250. One call returns the whole log (a log has fewer than 250 events), each event with its step, raw URL, canonical state, action and outcome. Use each event's state: two events with the same state are the same page state. You do not need canonical_states or log_info.
-      Then go through the events in step order. An attempt of a (state, action) pair is a retry when an earlier attempt of the same pair failed; a pair that only failed once and was never attempted again, or was only repeated after successes, has no retry.
-      Step 2: submit retries: one entry per retried pair, with its state exactly as read_log gave it, its action exactly as logged, and retry_count, the number of its attempts that came after its first failure. Each pair once; submit an empty list when nothing was retried.
+      Work in two steps: call pair_attempts, then submit. Keep your reasoning short.
+      Step 1: call pair_attempts once with the seed. It returns every (state, action) pair of the log with its outcomes in step order, e.g. [ok, fail, fail, ok].
+      For each pair, find its first fail. retry_count is the number of outcomes that come after that first fail. A pair with no fail, or whose only fail is its last outcome, has no retry and is left out.
+      Example: [ok, fail, fail, ok] gives retry_count 2; [fail] and [ok, ok, fail] give none; [fail, ok] gives 1.
+      Step 2: submit retries: one entry per pair with retry_count of 1 or more, with its state and action exactly as pair_attempts gave them. Each pair once; submit an empty list when nothing was retried.

@@ -9,7 +9,7 @@ from test_log import audit_by_tools
 
 import verifier
 from contract import TASKS, TOOLS, FullLogOutput, ReadInput, SeedInput, Task, Tool, UrlsInput
-from plugin import canonical_states, log_info, read_log, scan_log
+from plugin import canonical_states, log_info, pair_attempts, read_log, scan_log
 from plugin.log import canonical_state
 
 TASK = "audit-retries"
@@ -220,3 +220,35 @@ def test_read_log_events_carry_their_canonical_state_and_a_wrong_one_is_refused(
     assert verify_output("read_log", given, page)["valid"] is True
     page["events"][3]["state"] = "shop.example.com/wrong"
     assert verify_output("read_log", given, page)["valid"] is False
+
+
+def _retries_from_pairs(pairs) -> list[dict]:
+    found = []
+    for pair in pairs:
+        outcomes = [outcome.value for outcome in pair.outcomes]
+        if "fail" in outcomes:
+            count = len(outcomes) - outcomes.index("fail") - 1
+            if count:
+                found.append({"state": pair.state, "action": pair.action, "retry_count": count})
+    return sorted(found, key=lambda item: (item["state"], item["action"]))
+
+
+@pytest.mark.parametrize("seed", [0, 3, 7, 1_000_000, *range(300)])
+def test_one_pair_attempts_call_gives_the_reference_retries(seed: int, tmp_path: Path) -> None:
+    pairs = pair_attempts(SeedInput(seed=seed), None).pairs
+    found = _retries_from_pairs(pairs)
+    assert found == [plain_output(item) for item in reference(seed).retries]
+    assert verify_task(seed, {"retries": found}, reference(seed), tmp_path)["valid"] is True
+    assert sum(len(pair.outcomes) for pair in pairs) == log_info(SeedInput(seed=seed), None).events
+
+
+def test_pair_attempts_output_passes_its_checks_and_tampered_ones_do_not() -> None:
+    page = plain_output(pair_attempts(SeedInput(seed=7), None))
+    assert verify_input("pair_attempts", {"seed": 7})["valid"] is True
+    assert verify_input("pair_attempts", {"seed": -1})["valid"] is False
+    assert verify_output("pair_attempts", {"seed": 7}, page)["valid"] is True
+    assert verify_output("pair_attempts", {"seed": 7}, page | {"pairs": page["pairs"] + page["pairs"][:1]})["valid"] is False
+    assert verify_output("pair_attempts", {"seed": 7}, page | {"pairs": []})["valid"] is False
+    broken = [dict(pair) for pair in page["pairs"]]
+    broken[0]["state"] = "Shop.Example.com/Cart?sid=9"
+    assert verify_output("pair_attempts", {"seed": 7}, page | {"pairs": broken})["valid"] is False
